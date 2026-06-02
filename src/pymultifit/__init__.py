@@ -29,6 +29,20 @@ def mark_deprecated(ver_: str, new: str):
 
 
 def _md_scipy_like(ver_: str, new: str = "from_scipy_params"):
+    """Shorthand wrapper around :func:`mark_deprecated` for ``scipy_like`` methods.
+
+    Parameters
+    ----------
+    ver_ :
+        The version in which the ``scipy_like`` method is deprecated.
+    new :
+        The replacement method name. Defaults to ``"from_scipy_params"``.
+
+    Returns
+    -------
+    Callable
+        A deprecation decorator configured for the ``scipy_like``→``from_scipy_params`` migration.
+    """
     return mark_deprecated(ver_=ver_, new=new)
 
 

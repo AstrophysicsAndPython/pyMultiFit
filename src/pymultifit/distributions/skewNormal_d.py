@@ -171,6 +171,18 @@ class SkewNormalDistribution(BaseDistribution):
         sqrt_2_pi_delta = omega * SQRT_TWO_BY_PI * delta
 
         def _m0(alpha_):
+            """Approximate the mode offset for the skew-normal distribution.
+
+            Parameters
+            ----------
+            alpha_ :
+                The skewness parameter.
+
+            Returns
+            -------
+            float
+                The mode offset from the location parameter.
+            """
             term2 = (1 - PI / 4) * sqrt_2_pi_delta**3 / (1 - TWO_BY_PI * delta**2)
             term3 = (TWO_PI / abs(alpha_)) * EXP(-TWO_PI / abs(alpha_)) * sign(alpha_)
             return sqrt_2_pi_delta - term2 - term3

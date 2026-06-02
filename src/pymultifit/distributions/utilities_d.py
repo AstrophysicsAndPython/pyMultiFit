@@ -105,6 +105,29 @@ from ..typing import ArrayLike, NDArray
 
 
 def reject_x(x: ArrayLike, shp1=None, shp2=None, loc=0, scale=1) -> tuple[NDArray | None, bool]:
+    """Validate shape/scale parameters and apply loc-scale transformation.
+
+    Returns early (with ``None, True``) if any shape or scale parameter is
+    non-positive, or if *x* is empty.
+
+    Parameters
+    ----------
+    x :
+        Input array to transform.
+    shp1 :
+        First shape parameter. Rejected if ``<= 0``.
+    shp2 :
+        Second shape parameter. Rejected if ``<= 0``.
+    loc :
+        Location parameter for shifting. Defaults to 0.
+    scale :
+        Scale parameter for normalising. Rejected if ``<= 0``. Defaults to 1.
+
+    Returns
+    -------
+    tuple[NDArray | None, bool]
+        ``(transformed_x, False)`` on success, or ``(None, True)`` on rejection.
+    """
     for val in (shp1, shp2, scale):
         if val is not None and val <= 0:
             return None, True
@@ -709,6 +732,20 @@ def chi_square_pdf_(
 
 
 def _chi2(y, df_half):
+    """Compute the log-probability of the chi-square kernel.
+
+    Parameters
+    ----------
+    y :
+        Transformed input values (already loc-scale adjusted).
+    df_half :
+        Half the degrees of freedom (``df / 2``).
+
+    Returns
+    -------
+    NDArray
+        Log-kernel values.
+    """
     return ssp.xlogy(df_half - 1, y) - (y / 2) - ssp.gammaln(df_half) - (LOG_TWO * df_half)
 
 
@@ -1329,6 +1366,22 @@ def gamma_log_pdf_(
 
 
 def _gamma(x, a, un_log=False):
+    """Compute the log- (or linear-) gamma kernel.
+
+    Parameters
+    ----------
+    x :
+        Transformed input values.
+    a :
+        Shape parameter alpha.
+    un_log :
+        When ``True``, return the exponentiated (linear) value. Defaults to ``False``.
+
+    Returns
+    -------
+    NDArray
+        Log-gamma kernel values, or their exponent when *un_log* is ``True``.
+    """
     value = np.where(x >= 0, ssp.xlogy(a - 1.0, x) - x - ssp.gammaln(a), -INF)
     return EXP(value) if un_log else value
 
@@ -3062,6 +3115,25 @@ def quadratic(x: ArrayLike, a: float = 1.0, b: float = 1.0, c: float = 1.0) -> N
 
 @suppress_numpy_warnings()
 def _beta_expr(y: ArrayLike, a: float, b: float, un_log: bool = False):
+    """Compute the beta kernel expression for PDF or log-PDF evaluation.
+
+    Parameters
+    ----------
+    y :
+        Transformed input values (expected in ``(0, 1)``).
+    a :
+        First shape parameter alpha.
+    b :
+        Second shape parameter beta.
+    un_log :
+        When ``True``, return the linear (exponentiated) expression. Defaults to ``False``.
+
+    Returns
+    -------
+    tuple[list, NDArray]
+        A ``(masks, expr)`` pair where *masks* is a list of boolean arrays
+        describing special-case regions and *expr* is the computed kernel.
+    """
     in_range = (y > 0) & (y < 1)
 
     undefined_0 = (y == 0) & (a <= 1)
@@ -3076,6 +3148,20 @@ def _beta_expr(y: ArrayLike, a: float, b: float, un_log: bool = False):
 
 @suppress_numpy_warnings()
 def _folded_cdf(q: float, r: float) -> float:
+    """Evaluate the folded-normal CDF component.
+
+    Parameters
+    ----------
+    q :
+        The ``(x - mu) / sigma`` quantile.
+    r :
+        The ``(x + mu) / sigma`` quantile.
+
+    Returns
+    -------
+    float
+        The folded CDF value.
+    """
     _f = 0.5 * (ssp.erf(r) + ssp.erf(q))
     return _f.astype(float)
 
@@ -3102,6 +3188,20 @@ def _pdf_scaling(pdf_: ArrayLike, amplitude: float) -> NDArray:
 
 @suppress_numpy_warnings()
 def _log_pdf_scaling(log_pdf_: ArrayLike, amplitude: float) -> NDArray:
+    """Scale a log-PDF array by an amplitude in log-space.
+
+    Parameters
+    ----------
+    log_pdf_ :
+        Log-probability density values (not necessarily normalised).
+    amplitude :
+        The amplitude factor applied in log-space.
+
+    Returns
+    -------
+    NDArray
+        Amplitude-scaled log-PDF values.
+    """
     with np.errstate(all="ignore"):
         return LOG(amplitude) + (log_pdf_ - np.max(log_pdf_))
 

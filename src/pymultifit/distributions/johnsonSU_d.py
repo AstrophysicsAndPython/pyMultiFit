@@ -11,6 +11,30 @@ from ..typing import ArrayLike, NDArray
 
 
 class JohnsonSUDistribution(BaseDistribution):
+    r"""
+    Class for Johnson SU distribution.
+
+    Parameters
+    ----------
+    amplitude :
+        The amplitude of the PDF. Defaults to 1.0. Ignored if **normalize** is ``True``.
+    gamma :
+        The shape parameter :math:`\gamma`. Defaults to 0.0.
+    delta :
+        The shape parameter :math:`\delta`. Defaults to 1.0.
+    xi :
+        The location parameter :math:`\xi`. Defaults to 0.0.
+    lambda\_ :
+        The scale parameter :math:`\lambda`. Defaults to 1.0.
+    normalize :
+        If ``True``, the distribution is normalized so that the total area under the PDF equals 1.
+        Defaults to ``False``.
+
+    Raises
+    ------
+    NegativeAmplitudeError
+        If the provided value of amplitude is negative.
+    """
 
     def __init__(
         self,
@@ -34,6 +58,25 @@ class JohnsonSUDistribution(BaseDistribution):
 
     @classmethod
     def from_scipy_params(cls, a: float, b: float, loc: float = 0.0, scale: float = 1.0) -> "JohnsonSUDistribution":
+        """
+        Instantiate JohnsonSUDistribution with scipy parameterization.
+
+        Parameters
+        ----------
+        a :
+            The shape parameter :math:`\gamma`.
+        b :
+            The shape parameter :math:`\delta`.
+        loc :
+            The location parameter. Defaults to 0.0.
+        scale :
+            The scale parameter. Defaults to 1.0.
+
+        Returns
+        -------
+        JohnsonSUDistribution
+            An instance of normalized JohnsonSUDistribution.
+        """
         return cls(gamma=a, delta=b, xi=loc, lambda_=scale, normalize=True)
 
     def pdf(self, x: ArrayLike) -> NDArray:

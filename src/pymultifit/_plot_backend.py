@@ -41,6 +41,24 @@ def _qq(
     plot_title: str = "QQ-Plot",
     axis: Axes | None = None,
 ) -> Axes:
+    """Generate a Q-Q (quantile-quantile) plot for the fit residuals.
+
+    Parameters
+    ----------
+    plot_object :
+        The :class:`~pymultifit._plot.FitPlotter` instance managing the plot.
+    fitter_object :
+        The fitted fitter whose residuals are used.
+    plot_title :
+        Title of the Q-Q plot. Defaults to ``"QQ-Plot"``.
+    axis :
+        Existing axes to draw on. A new 6×6 figure is created when ``None``.
+
+    Returns
+    -------
+    Axes
+        The axes on which the Q-Q plot was drawn.
+    """
     plot_object._validate_fitted()
     residual = fitter_object.get_residuals()
 
@@ -94,6 +112,26 @@ def _param_correlation(
     param_labels: list[str] | None = None,
     axis: Axes | None = None,
 ) -> Axes:
+    """Plot the parameter correlation matrix as a colour-mapped heatmap.
+
+    Parameters
+    ----------
+    plot_object :
+        The :class:`~pymultifit._plot.FitPlotter` instance managing the plot.
+    fitter_object :
+        The fitted fitter whose covariance matrix is used.
+    plot_title :
+        Title of the heatmap. Defaults to ``"Parameter Correlation Matrix"``.
+    param_labels :
+        Custom axis tick labels. Auto-generated when ``None``.
+    axis :
+        Existing axes to draw on. A square figure is created when ``None``.
+
+    Returns
+    -------
+    Axes
+        The axes on which the heatmap was drawn.
+    """
     plot_object._validate_fitted()
     params = fitter_object.params
     cov_matrix = fitter_object.covariance
@@ -141,6 +179,27 @@ def _prediction_interval(
     axis: Axes | None = None,
     **kwargs,
 ) -> Axes:
+    """Plot prediction interval bands around the fitted curve.
+
+    Parameters
+    ----------
+    plot_object :
+        The :class:`~pymultifit._plot.FitPlotter` instance managing the plot.
+    fitter_object :
+        The fitted fitter whose parameters and residuals are used.
+    pi_level :
+        Prediction interval level(s) as integer percentages. Defaults to 95.
+    axis :
+        Existing axes to draw on. A new 10×6 figure is created when ``None``.
+    **kwargs :
+        Optional keyword arguments forwarded to :func:`_resolve_kwargs` (``x_label``,
+        ``y_label``, ``plot_title``, ``data_label``, ``fit_label``).
+
+    Returns
+    -------
+    Axes
+        The axes on which the prediction interval bands were drawn.
+    """
     plot_object._validate_fitted()
     params = fitter_object.params
 
@@ -205,6 +264,33 @@ def _ci(
     individual_ci: bool,
     axis: Axes | None,
 ) -> Axes:
+    """Draw confidence interval bands on an axes from pre-computed CI results.
+
+    Parameters
+    ----------
+    fitter_object :
+        The fitted fitter providing ``x_values`` for the x-axis fallback.
+    results :
+        Pre-computed CI dict as returned by :func:`~pymultifit.fitters.backend._ci_backend.compute_ci_bounds`.
+    ci_levels :
+        CI percentage level(s) to render (e.g. ``95`` or ``[68, 95]``).
+    overall_ci :
+        Draw the overall composite CI band when ``True``.
+    individual_ci :
+        Draw per-component CI bands when ``True``.
+    axis :
+        Existing axes to draw on. A new 10×6 figure is created when ``None``.
+
+    Returns
+    -------
+    Axes
+        The axes on which the CI bands were drawn.
+
+    Raises
+    ------
+    KeyError
+        If a requested CI level is absent from *results*.
+    """
     if axis is None:
         _, axis = plt.subplots(figsize=(10, 6))
 
@@ -272,6 +358,34 @@ def _fit_and_residual(
     residual_label,
     plot_title,
 ) -> tuple[Figure, tuple[Axes, Axes]]:
+    """Create a two-panel figure with the fit on top and residuals below.
+
+    Parameters
+    ----------
+    plot_object :
+        The :class:`~pymultifit._plot.FitPlotter` instance managing the plot.
+    fitter_object :
+        The fitted fitter.
+    show_individuals :
+        Whether to overlay individual component fits in the top panel.
+    x_label :
+        Label for the shared x-axis (rendered on the residuals panel).
+    y_label :
+        Label for the y-axis of the fit panel.
+    data_label :
+        Legend label for the raw-data series.
+    fit_label :
+        Legend label for the total-fit series.
+    residual_label :
+        Label for the residuals panel y-axis.
+    plot_title :
+        Title of the fit panel.
+
+    Returns
+    -------
+    tuple[Figure, tuple[Axes, Axes]]
+        ``(fig, (ax_fit, ax_residuals))``.
+    """
     plot_object._validate_fitted()
 
     fig, (ax1, ax2) = plt.subplots(
@@ -300,6 +414,25 @@ def _fit_and_residual(
 def _resid(
     plot_object: "FitPlotter", fitter_object: "BaseFitter | MixedDataFitter", axis: Axes | None = None, **kwargs
 ) -> Axes:
+    """Plot the fit residuals (data − model) as a line chart.
+
+    Parameters
+    ----------
+    plot_object :
+        The :class:`~pymultifit._plot.FitPlotter` instance managing the plot.
+    fitter_object :
+        The fitted fitter whose :meth:`get_residuals` is called.
+    axis :
+        Existing axes to draw on. A new figure is created when ``None``.
+    **kwargs :
+        Optional keyword arguments forwarded to :func:`_resolve_kwargs` (``x_label``,
+        ``y_label``, ``residual_label``).
+
+    Returns
+    -------
+    Axes
+        The axes on which the residuals were drawn.
+    """
     plot_object._validate_fitted()
     x, y = np.asarray(fitter_object.x_values), np.asarray(fitter_object.y_values)
 
@@ -321,6 +454,27 @@ def _resid(
 
 
 def _resolve_kwargs(kwargs, n_fits=None, class_name=None, get_residual_label=False):
+    """Extract and provide defaults for common plotting keyword arguments.
+
+    Parameters
+    ----------
+    kwargs :
+        Raw keyword-argument dict passed through from the caller.
+    n_fits :
+        Number of fitted components, used to build a default plot title.
+    class_name :
+        Fitter class name, used to build a default plot title.
+    get_residual_label :
+        When ``True``, also return the ``residual_label`` value.
+
+    Returns
+    -------
+    tuple
+        ``(x_label, y_label, plot_title, data_label, fit_label)`` when
+        *get_residual_label* is ``False``, or
+        ``(x_label, y_label, plot_title, data_label, fit_label, residual_label)``
+        when it is ``True``.
+    """
     x_label = kwargs.get("x_label", "X")
     y_label = kwargs.get("y_label", "Y")
     plot_title = kwargs.get("plot_title", f"{n_fits} {class_name} fit")
@@ -342,6 +496,29 @@ def _plot(
     is_scatter: bool = False,
     **kwargs,
 ) -> Axes:
+    """Render raw data and the composite fitted model on a single axes.
+
+    Parameters
+    ----------
+    plot_object :
+        The :class:`~pymultifit._plot.FitPlotter` instance managing the plot.
+    fitter_object :
+        The fitted fitter providing parameters and data.
+    show_individuals :
+        When ``True``, individual component fits are overlaid as dashed lines.
+    axis :
+        Existing axes to draw on. A new 10×6 figure is created when ``None``.
+    is_scatter :
+        When ``True``, raw data is drawn as a scatter plot.
+    **kwargs :
+        Optional keyword arguments forwarded to :func:`_resolve_kwargs` (``x_label``,
+        ``y_label``, ``plot_title``, ``data_label``, ``fit_label``).
+
+    Returns
+    -------
+    Axes
+        The axes on which the fit was drawn.
+    """
     plot_object._validate_fitted()
     x, y = np.asarray(fitter_object.x_values), np.asarray(fitter_object.y_values)
 

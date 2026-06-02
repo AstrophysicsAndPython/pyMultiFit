@@ -89,6 +89,18 @@ class BaseDistribution:
         """
 
     def _get_stats(self, key: str) -> float | None:
+        """Retrieve a single statistic by key from :meth:`stats`.
+
+        Parameters
+        ----------
+        key :
+            The statistic name (e.g. ``"mean"``, ``"variance"``).
+
+        Returns
+        -------
+        float or None
+            The requested statistic, or ``None`` if unavailable.
+        """
         stats = self.stats()
         return stats.get(key) if stats else None
 

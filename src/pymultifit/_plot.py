@@ -36,6 +36,20 @@ class FitPlotter:
     _REQUIRED_ATTRS = ("x_values", "y_values", "params", "n_fits", "n_par", "_n_fitter")
 
     def __init__(self, fitter) -> None:
+        """
+        Initialize FitPlotter.
+
+        Parameters
+        ----------
+        fitter :
+            A fitted (or pre-fit) fitter instance. Must expose the attributes
+            listed in :attr:`_REQUIRED_ATTRS`.
+
+        Raises
+        ------
+        TypeError
+            If the supplied object is missing any required attribute.
+        """
         missing = [a for a in self._REQUIRED_ATTRS if not hasattr(fitter, a)]
         if missing:
             raise TypeError(f"Fitter is missing required attributes: {missing}")
@@ -86,6 +100,7 @@ class FitPlotter:
         return plt.rcParams["axes.prop_cycle"].by_key()["color"][1:]
 
     def _is_mixed_fitter(self) -> bool:
+        """Return ``True`` if the wrapped fitter is a ``MixedDataFitter`` instance."""
         return hasattr(self.fitter, "model_list")
 
     @staticmethod
@@ -192,9 +207,28 @@ class FitPlotter:
 
     @staticmethod
     def _unwrap_plotter(plotter) -> Axes:
+        """Unwrap a plotter result that may be a single :class:`~matplotlib.axes.Axes` or a list.
+
+        Parameters
+        ----------
+        plotter :
+            The return value of a plotting helper — either an ``Axes`` or a ``list`` containing one.
+
+        Returns
+        -------
+        Axes
+            The unwrapped axes object.
+        """
         return plotter[0] if isinstance(plotter, list) else plotter
 
     def _validate_fitted(self) -> None:
+        """Raise ``RuntimeError`` if the fitter has not been fitted yet.
+
+        Raises
+        ------
+        RuntimeError
+            If :attr:`fitter.params` is ``None``.
+        """
         if self.fitter.params is None:
             raise RuntimeError("Fit not performed yet. Call fit() first.")
 

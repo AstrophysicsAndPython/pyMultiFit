@@ -54,6 +54,31 @@ fitter_dict = {
 
 
 class MixedDataFitter(BaseFitter):
+    """A class for fitting data with a mixture of different distribution models.
+
+    Parameters
+    ----------
+    x_values :
+        Input x-values for fitting.
+    y_values :
+        Input y-values for fitting.
+    model_list :
+        A list of model name strings specifying which distributions to mix.
+        If ``None``, keys from *model_dictionary* are used.
+    fitter_dictionary :
+        Deprecated. Use *model_dictionary* instead.
+    model_dictionary :
+        A dictionary mapping model name strings to fitter classes.
+        When ``None``, the built-in ``fitter_dict`` is used.
+    max_iterations :
+        Maximum number of iterations for the fitting algorithm.
+        Defaults to 1 000.
+
+    Raises
+    ------
+    ValueError
+        If neither *model_list* nor *model_dictionary* is provided.
+    """
 
     def __init__(
         self,
@@ -64,6 +89,27 @@ class MixedDataFitter(BaseFitter):
         model_dictionary: dict | None = None,
         max_iterations: int = 1_000,
     ):
+        """
+        Initialize MixedDataFitter.
+
+        Parameters
+        ----------
+        x_values :
+            Input x-values for fitting.
+        y_values :
+            Input y-values for fitting.
+        model_list :
+            A list of model name strings specifying which distributions to mix.
+            If ``None``, keys from *model_dictionary* are used.
+        fitter_dictionary :
+            Deprecated. Use *model_dictionary* instead.
+        model_dictionary :
+            A dictionary mapping model name strings to fitter classes.
+            When ``None``, the built-in ``fitter_dict`` is used.
+        max_iterations :
+            Maximum number of iterations for the fitting algorithm.
+            Defaults to 1 000.
+        """
         # Check if the deprecated parameter was used
         if fitter_dictionary is not None:
             warnings.warn(
@@ -104,6 +150,7 @@ class MixedDataFitter(BaseFitter):
         self.model_function = self._create_model_function()
 
     def __repr__(self) -> str:
+        """Return a string representation of the MixedDataFitter instance."""
         return (
             f"{self.__class__.__name__}(x_values={self.x_values}, y_values={self.y_values}, "
             f"model_list={self.model_list}, max_iterations={self.max_iterations})"
@@ -152,7 +199,10 @@ class MixedDataFitter(BaseFitter):
         """
         Calculates the expected number of parameters based on the model list.
 
-        :return: The number of parameters.
+        Returns
+        -------
+        int
+            The total number of parameters across all models in the model list.
         """
         count = 0
         for model in self.model_list:
@@ -203,6 +253,22 @@ class MixedDataFitter(BaseFitter):
     def _compute_individual_ci(
         self, x_: NDArray, mv_parameters: NDArray, bounds: list[tuple[int, tuple[float, float, float]]]
     ) -> dict:
+        """Delegate per-component CI computation to the mixed CI backend.
+
+        Parameters
+        ----------
+        x_ :
+            Evaluation x-values.
+        mv_parameters :
+            Bootstrap samples, shape ``(n_bootstrap, n_total_params)``.
+        bounds :
+            Output of :func:`~pymultifit.fitters.backend._ci_backend._ci_to_percentiles`.
+
+        Returns
+        -------
+        dict
+            ``{ci_value: [{"lower": ..., "median": ..., "upper": ...}, ...]}``
+        """
         return compute_individual_ci_mixed(fitter_object=self, mv_parameters=mv_parameters, x_=x_, bounds=bounds)
 
     def _get_bounds(self) -> tuple[NDArray, NDArray]:
@@ -225,6 +291,23 @@ class MixedDataFitter(BaseFitter):
         return np.array(lower_bounds), np.array(upper_bounds)
 
     def _instantiate_class(self, model: str):
+        """Instantiate a fitter class for the given model name.
+
+        Parameters
+        ----------
+        model :
+            The model name to look up in the fitter dictionary.
+
+        Returns
+        -------
+        BaseFitter
+            An instance of the corresponding fitter class with empty data arrays.
+
+        Raises
+        ------
+        ValueError
+            If *model* is not found in the fitter dictionary.
+        """
         try:
             fitter_instance = self.fitter_dict[model](x_values=np.array([]), y_values=np.array([]))
         except KeyError:
@@ -233,9 +316,33 @@ class MixedDataFitter(BaseFitter):
         return fitter_instance
 
     def _instantiate_n_par(self, model: str) -> int:
+        """Return the number of parameters for the given model.
+
+        Parameters
+        ----------
+        model :
+            The model name to look up.
+
+        Returns
+        -------
+        int
+            The number of parameters for the specified model.
+        """
         return self._instantiate_class(model).n_par
 
     def _instantiate_bounds(self, model: str) -> tuple[Sequence[float], Sequence[float]]:
+        """Return the fit boundaries (lower and upper) for the given model.
+
+        Parameters
+        ----------
+        model :
+            The model name to look up.
+
+        Returns
+        -------
+        tuple[Sequence[float], Sequence[float]]
+            Lower and upper bounds for the model's parameters.
+        """
         return self._instantiate_class(model).fit_boundaries()
 
     def _component_param_offsets(self) -> list[int]:

@@ -12,6 +12,28 @@ from ...typing import ArrayLike, NDArray
 
 
 class ScaledInverseChiSquareDistribution(BaseDistribution):
+    r"""
+    Class for Scaled Inverse Chi-Square distribution.
+
+    Parameters
+    ----------
+    amplitude :
+        The amplitude of the PDF. Defaults to 1.0. Ignored if **normalize** is ``True``.
+    df :
+        The degrees of freedom parameter :math:`\nu`. Defaults to 1.0.
+    scale :
+        The scale parameter :math:`s^2`. Defaults to 1.0.
+    loc :
+        The location parameter, for shifting. Defaults to 0.0.
+    normalize :
+        If ``True``, the distribution is normalized so that the total area under the PDF equals 1.
+        Defaults to ``False``.
+
+    Raises
+    ------
+    NegativeAmplitudeError
+        If the provided value of amplitude is negative.
+    """
     def __init__(
         self, amplitude: float = 1.0, df: float = 1.0, scale: float = 1.0, loc: float = 0.0, normalize: bool = False
     ):
@@ -29,10 +51,44 @@ class ScaledInverseChiSquareDistribution(BaseDistribution):
     @classmethod
     @_md_scipy_like("1.0.7")
     def scipy_like(cls, a: float, loc: float = 0.0, scale=1.0):
+        """
+        Instantiate ScaledInverseChiSquareDistribution with scipy parameterization.
+
+        Parameters
+        ----------
+        a :
+            The degrees of freedom parameter.
+        loc :
+            The location parameter. Defaults to 0.0.
+        scale :
+            The scale parameter. Defaults to 1.0.
+
+        Returns
+        -------
+        ScaledInverseChiSquareDistribution
+            An instance of normalized ScaledInverseChiSquareDistribution.
+        """
         return cls(df=a, loc=loc, scale=scale, normalize=True)
 
     @classmethod
     def from_scipy_params(cls, a: float, loc: float = 0.0, scale=1.0):
+        """
+        Instantiate ScaledInverseChiSquareDistribution with scipy parameterization.
+
+        Parameters
+        ----------
+        a :
+            The degrees of freedom parameter.
+        loc :
+            The location parameter. Defaults to 0.0.
+        scale :
+            The scale parameter. Defaults to 1.0.
+
+        Returns
+        -------
+        ScaledInverseChiSquareDistribution
+            An instance of normalized ScaledInverseChiSquareDistribution.
+        """
         return cls(df=a, loc=loc, scale=scale, normalize=True)
 
     def pdf(self, x: ArrayLike) -> NDArray:

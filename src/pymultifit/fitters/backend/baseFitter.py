@@ -24,6 +24,18 @@ class BaseFitter:
     _plotter: FitPlotter | None
 
     def __init__(self, x_values: ArrayLike, y_values: ArrayLike, max_iterations: int = 1000):
+        """
+        Initialize BaseFitter.
+
+        Parameters
+        ----------
+        x_values :
+            Input x-values for fitting.
+        y_values :
+            Input y-values for fitting.
+        max_iterations :
+            Maximum number of iterations for the fitting algorithm. Defaults to 1000.
+        """
         x_values, y_values = sanity_check(x_values=x_values, y_values=y_values)
         self.x_values = x_values
         self.y_values = y_values
@@ -526,6 +538,22 @@ class BaseFitter:
     def _compute_individual_ci(
         self, x_: ArrayLike, mv_parameters: ArrayLike, bounds: list[tuple[int, tuple[float, float, float]]]
     ) -> dict:
+        """Compute confidence intervals for each individual fit component.
+
+        Parameters
+        ----------
+        x_ :
+            The x-values at which to evaluate confidence intervals.
+        mv_parameters :
+            Multivariate normal samples of the fit parameters.
+        bounds :
+            List of ``(index, (lower, center, upper))`` bound tuples per component.
+
+        Returns
+        -------
+        dict
+            Mapping of component index to computed CI results.
+        """
         return compute_individual_ci_base(fitter_object=self, mv_parameters=mv_parameters, x_=x_, bounds=bounds)
 
     def plot_fit(
@@ -539,6 +567,32 @@ class BaseFitter:
         is_scatter: bool = False,
         axis: Axes | None = None,
     ) -> Axes:
+        """Plot the fitted model against the data.
+
+        Parameters
+        ----------
+        show_individuals :
+            Whether to show individual fit components. Defaults to ``False``.
+        x_label :
+            Label for the x-axis. Defaults to ``"X"``.
+        y_label :
+            Label for the y-axis. Defaults to ``"Y"``.
+        plot_title :
+            Title of the plot. Defaults to ``"Plot"``.
+        data_label :
+            Legend label for the data series. Defaults to ``"Data"``.
+        fit_label :
+            Legend label for the total fit. Defaults to ``"Total Fit"``.
+        is_scatter :
+            Whether to render the data as a scatter plot. Defaults to ``False``.
+        axis :
+            Existing :class:`~matplotlib.axes.Axes` to draw on. If ``None``, a new figure is created.
+
+        Returns
+        -------
+        Axes
+            The axes object containing the plot.
+        """
         return self.plotter.plot_fit(
             show_individuals=show_individuals,
             x_label=x_label,
